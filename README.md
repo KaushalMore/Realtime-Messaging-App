@@ -1,3 +1,8 @@
+## Project Structure
+This repository contains two main components, organized within the `Realtime Messaging App` parent directory:
+-  `chat/`:            # Spring Boot Backend Application
+-  `chat-app/`:        # React.js Frontend Application
+
 # Realtime Messaging Application
 
 A full-stack application for real-time messaging, featuring a React.js frontend and a Spring Boot backend with WebSocket capabilities.
@@ -14,10 +19,3 @@ This application provides real-time messaging functionality, allowing users to c
 * **User Presence:** Show online/offline status.
 * **Responsive UI:** User-friendly chat interface accessible on various devices.
 * **WebSocket Communication:** Utilizes WebSockets for efficient real-time data transfer.
-
-## Project Structure
-
-This repository contains two main components, organized within the `Realtime Messaging App` parent directory:
-Realtime Messaging App/
-├── chat/             # Spring Boot Backend Application
-├── chat-app/         # React.js Frontend Application
