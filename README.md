@@ -3,19 +3,34 @@ This repository contains two main components, organized within the `Realtime Mes
 -  `chat/`:            # Spring Boot Backend Application
 -  `chat-app/`:        # React.js Frontend Application
 
-# Realtime Messaging Application
+# 💬 Realtime Messaging App
 
-A full-stack application for real-time messaging, featuring a React.js frontend and a Spring Boot backend with WebSocket capabilities.
+A full-stack messaging application built using **React.js** for the frontend and **Spring Boot** with **WebSocket** support for the backend. This app enables users to communicate instantly through direct messages, with real-time updates and persistent chat history.
 
-## Project Overview
+---
 
-This application provides real-time messaging functionality, allowing users to communicate instantly. The backend handles message routing and persistence, while the frontend provides an intuitive chat interface. It demonstrates the integration of WebSockets with a Spring Boot backend and a React.js frontend.
+## 📌 Project Overview
 
-## Features
-* **User Authentication:** User registration and login.
-* **Real-time Messaging:** Send and receive messages instantly.
-* **Direct Messages:** Support direct user-to-user messages.
-* **Message Persistence:** Messages are stored in a database.
-* **User Presence:** Show online/offline status.
-* **Responsive UI:** User-friendly chat interface accessible on various devices.
-* **WebSocket Communication:** Utilizes WebSockets for efficient real-time data transfer.
+This application demonstrates the integration of WebSockets for real-time communication between users. It includes secure authentication, user presence tracking, and a responsive chat interface. Messages are stored in a database to ensure continuity across sessions.
+
+---
+
+## ✨ Features
+
+- 🔐 **User Authentication** – Register and log in securely  
+- 💬 **Realtime Messaging** – Send and receive messages instantly  
+- 👥 **Direct Chats** – One-on-one messaging between users  
+- 🕒 **Message Persistence** – Chat history saved in the database  
+- 🟢 **User Presence** – Online/offline status indicators  
+- 📱 **Responsive UI** – Works across devices  
+- 🔄 **WebSocket Integration** – Efficient bidirectional communication
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React.js, HTML, CSS, Axios  
+- **Backend**: Java, Spring Boot, WebSocket, JPA  
+- **Database**: MySQL  
+- **Build Tools**: Maven  
+- **Version Control**: Git, GitHub
