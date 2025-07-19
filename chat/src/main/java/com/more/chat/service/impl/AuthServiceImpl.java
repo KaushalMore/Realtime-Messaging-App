@@ -1,0 +1,95 @@
+package com.more.chat.service.impl;
+
+import com.more.chat.dto.LoginRequest;
+import com.more.chat.dto.Response;
+import com.more.chat.dto.UserDto;
+import com.more.chat.entity.Connections;
+import com.more.chat.entity.User;
+import com.more.chat.exception.ResourceNotFoundException;
+import com.more.chat.jwt.JwtService;
+import com.more.chat.mapper.Mapper;
+import com.more.chat.repository.UserRepository;
+import com.more.chat.service.interfaces.AuthService;
+import com.more.chat.service.interfaces.ConnectionService;
+import com.more.chat.service.interfaces.MessageService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class AuthServiceImpl implements AuthService {
+
+    private final UserRepository userRepository;
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
+    private final MessageService messageService;
+    private final ConnectionService connectionService;
+
+    @Override
+    public Response verify(LoginRequest loginRequest) {
+        Response response = new Response();
+        try {
+//            try {
+//                authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+//                        loginRequest.getEmail(), loginRequest.getPassword()));
+//            } catch (AuthenticationException ex) {
+//                throw new BadCredentialsException("Invalid username or password", ex);
+//            }
+
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+                    loginRequest.getEmail(), loginRequest.getPassword()));
+
+            // Fetch the user from the repository
+            User user = userRepository.findByEmail(loginRequest.getEmail())
+                    .orElseThrow(() -> new ResourceNotFoundException("User", "email", loginRequest.getEmail()));
+
+            // Generate a token and map the user to a DTO
+            var token = jwtService.generateToken(user.getEmail());
+            UserDto userDto = Mapper.mapUserEntityToUserDto(user);
+
+            // Fetch the latest messages for the user
+            // List<MessageDto> messages = messageService.getLatestMessages(user.getId(), 20, 50); // Fetch messages for up to 20 conversations, 50 messages each
+            List<Connections> connectionByIdAndStatus =
+                    connectionService.getConnectionByIdAndStatus(user.getId(), "CONFIRMED");
+
+            response.setStatusCode(200);
+            response.setAccessToken(token);
+            response.setUserDto(userDto);
+//             response.setDtoList(messages);
+            response.setConnectionsDtoList(connectionByIdAndStatus.stream().map(Mapper::mapConnectionsEntityToConnectionsDto).toList());
+            response.setMessage("Login successful");
+        } catch (ResourceNotFoundException e) {
+            log.warn("User not found with the provided email: {}", loginRequest.getEmail());
+            response.setStatusCode(404);
+            response.setMessage("User not found with the provided email.");
+        } catch (BadCredentialsException e) {
+//        } catch (AuthenticationException e) {
+            log.warn("Invalid credentials provided for email: {}", loginRequest.getEmail());
+            response.setStatusCode(401);
+            response.setMessage("Invalid username or password.");
+        } catch (Exception e) {
+            log.error("An unexpected error occurred during user login: ", e);
+            response.setStatusCode(500);
+            response.setMessage("An unexpected error occurred during login.");
+        }
+        return response;
+    }
+
+    @Override
+    public void disconnectUser(String email) {
+        var storeUser = userRepository.findByEmail(email)
+                .orElse(null);
+        if (storeUser != null) {
+//            storeUser.setOnline(false);
+//            userRepository.save(storeUser);
+        }
+    }
+}

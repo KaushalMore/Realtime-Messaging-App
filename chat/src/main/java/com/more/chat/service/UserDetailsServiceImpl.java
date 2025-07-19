@@ -1,0 +1,30 @@
+package com.more.chat.service;
+
+import com.more.chat.entity.User;
+import com.more.chat.entity.UserDetailsImpl;
+import com.more.chat.exception.ResourceNotFoundException;
+import com.more.chat.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class UserDetailsServiceImpl implements UserDetailsService {
+
+    private final UserRepository userRepository;
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        try {
+            User user = userRepository.findByEmail(username)
+                    .orElseThrow(() -> new ResourceNotFoundException("User", "email", username));
+            return new UserDetailsImpl(user);
+        }
+        catch (ResourceNotFoundException e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+}

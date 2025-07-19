@@ -1,0 +1,26 @@
+package com.more.chat.service;
+
+import com.more.chat.dto.LoginRequest;
+import com.more.chat.dto.Response;
+import com.more.chat.dto.UserDto;
+import com.more.chat.entity.User;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+
+public interface UserService {
+
+    Response saveUser(User user);
+
+    Response findByEmail(String email);
+
+    Response searchUser(String query);
+
+    Response allUsers();
+
+    Response update(String email, String fullName, String password, MultipartFile profilePic);
+
+    Response deleteUserById(String email);
+
+    User getUserById(Long id);
+}

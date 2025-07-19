@@ -1,0 +1,203 @@
+package com.more.chat.service.impl;
+
+import com.more.chat.dto.Response;
+import com.more.chat.entity.Connections;
+import com.more.chat.entity.User;
+import com.more.chat.exception.GeneralException;
+import com.more.chat.exception.ResourceNotFoundException;
+import com.more.chat.mapper.UserMapper;
+import com.more.chat.repository.ConnectionsRepository;
+import com.more.chat.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+
+//@Service
+//public class ConnectionServiceImplCopy implements ConnectionService {
+@RequiredArgsConstructor
+public class ConnectionServiceImplCopy {
+
+    private final ConnectionsRepository connectionsRepository;
+    private final UserRepository userRepository;
+
+    private static final String PENDING_STATUS = "PENDING";
+    private static final String CONFIRMED_STATUS = "CONFIRMED";
+
+    private static final String SUCCESS_RESPONSE = "Success";
+    
+    public Response connectUser(Long senderId, Long recipientId) {
+        Response response = new Response();
+        try {
+            User sender = getUserById(senderId);
+            User recipient = getUserById(recipientId);
+            Connections connection = new Connections();
+            connection.setSender(sender);
+            connection.setRecipient(recipient);
+            connection.setStatus(PENDING_STATUS);
+            connectionsRepository.save(connection);
+
+            response.setStatusCode(200);
+            response.setMessage(SUCCESS_RESPONSE);
+        } catch (ResourceNotFoundException e) {
+            response.setStatusCode(404);
+            response.setMessage(e.getMessage());
+        } catch (Exception e) {
+            response.setStatusCode(500);
+            response.setMessage("Error sending connection request to user : " + e.getMessage());
+        }
+        return response;
+    }
+
+     
+    public Response getSentConnectionRequests(Long userId) {
+        Response response = new Response();
+        try {
+            if (!userRepository.existsById(userId)) {
+                throw new ResourceNotFoundException("User", "id", userId.toString());
+            }
+            List<Connections> connections = connectionsRepository.findBySenderId(userId);
+            response.setStatusCode(200);
+            response.setMessage(SUCCESS_RESPONSE);
+            response.setConnectionsDtoList(connections.stream().map(UserMapper::mapConnectionsEntityToConnectionsDto).toList());
+        } catch (ResourceNotFoundException e) {
+            response.setStatusCode(404);
+            response.setMessage(e.getMessage());
+        } catch (Exception e) {
+            response.setStatusCode(500);
+            response.setMessage("Error fetching sent connection : " + e.getMessage());
+        }
+        return response;
+    }
+
+     
+    public Response getReceivedConnectionRequests(Long userId) {
+        Response response = new Response();
+        try {
+            if (!userRepository.existsById(userId)) {
+                throw new ResourceNotFoundException("User", "id", userId.toString());
+            }
+            List<Connections> connections = connectionsRepository.findByRecipientId(userId);
+            response.setStatusCode(200);
+            response.setMessage(SUCCESS_RESPONSE);
+            response.setConnectionsDtoList(
+                    connections.stream().map(UserMapper::mapConnectionsEntityToConnectionsDto).toList());
+        } catch (ResourceNotFoundException e) {
+            response.setStatusCode(404);
+            response.setMessage(e.getMessage());
+        } catch (Exception e) {
+            response.setStatusCode(500);
+            response.setMessage("Error fetching received connection : " + e.getMessage());
+        }
+        return response;
+    }
+
+     
+    public Response confirmConnection(Long recipientId, Long connectionId) {
+        Response response = new Response();
+        try {
+            if (!userRepository.existsById(recipientId)) {
+                throw new ResourceNotFoundException("Recipient", "id", recipientId.toString());
+            }
+            Connections connection = connectionsRepository.findById(connectionId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Connection", "id", connectionId.toString()));
+            if (!connection.getRecipient().getId().equals(recipientId)) {
+                throw new GeneralException("Only recipient can confirm connection");
+            }
+            connection.setStatus(CONFIRMED_STATUS);
+            connectionsRepository.save(connection);
+
+            response.setStatusCode(200);
+            response.setMessage(SUCCESS_RESPONSE);
+            response.setConnectionsDto(UserMapper.mapConnectionsEntityToConnectionsDto(connection));
+        } catch (ResourceNotFoundException e) {
+            response.setStatusCode(404);
+            response.setMessage(e.getMessage());
+        } catch (GeneralException e) {
+            response.setStatusCode(400);
+            response.setMessage(e.getMessage());
+        } catch (Exception e) {
+            response.setStatusCode(500);
+            response.setMessage("Error confirming connection : " + e.getMessage());
+        }
+        return response;
+    }
+
+     
+    public Response deletePendingConnections(Long userId, Long connectionId) {
+        Response response = new Response();
+        try {
+            if (!userRepository.existsById(userId)) {
+                throw new ResourceNotFoundException("User", "id", userId.toString());
+            }
+            Connections connection = connectionsRepository.findById(connectionId)
+                    .orElseThrow(() -> new RuntimeException("Connection not found"));
+            if (!connection.getStatus().equals(PENDING_STATUS)) {
+                throw new GeneralException("Connection Confirmed");
+            }
+            connectionsRepository.delete(connection);
+            response.setStatusCode(200);
+            response.setMessage(SUCCESS_RESPONSE);
+        } catch (GeneralException e) {
+            response.setStatusCode(400);
+            response.setMessage(e.getMessage());
+        } catch (ResourceNotFoundException e) {
+            response.setStatusCode(404);
+            response.setMessage(e.getMessage());
+        } catch (Exception e) {
+            response.setStatusCode(500);
+            response.setMessage("Error deleting connection : " + e.getMessage());
+        }
+        return response;
+    }
+
+     
+    public Response deleteEstablishedConnection(Long userId, Long connectionId) {
+        Response response = new Response();
+        try {
+            if (!userRepository.existsById(userId)) {
+                throw new ResourceNotFoundException("User", "id", userId.toString());
+            }
+            Connections connection = connectionsRepository.findById(connectionId)
+                    .orElseThrow(() -> new RuntimeException("Connection not found"));
+            if (!connection.getStatus().equals(CONFIRMED_STATUS)) {
+                throw new GeneralException("Connection not confirmed");
+            }
+            connectionsRepository.delete(connection);
+            response.setStatusCode(200);
+            response.setMessage(SUCCESS_RESPONSE);
+        } catch (GeneralException e) {
+            response.setStatusCode(400);
+            response.setMessage(e.getMessage());
+        } catch (ResourceNotFoundException e) {
+            response.setStatusCode(404);
+            response.setMessage(e.getMessage());
+        } catch (Exception e) {
+            response.setStatusCode(500);
+            response.setMessage("Error deleting connection : " + e.getMessage());
+        }
+        return response;
+    }
+
+
+    private User getUserById(Long userId) {
+        return userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User", "id", userId.toString()));
+    }
+
+    private Connections getConnectionById(Long connectionId) {
+        return connectionsRepository.findById(connectionId).orElseThrow(() -> new ResourceNotFoundException("Connection", "id", connectionId.toString()));
+    }
+
+    private void handleException(Exception e, Response response, String errorMessage) {
+        if (e instanceof ResourceNotFoundException) {
+            response.setStatusCode(404);
+            response.setMessage(e.getMessage());
+        } else if (e instanceof GeneralException) {
+            response.setStatusCode(400);
+            response.setMessage(e.getMessage());
+        } else {
+            response.setStatusCode(500);
+            response.setMessage(errorMessage + " : " + e.getMessage());
+        }
+    }
+
+}

@@ -1,0 +1,2 @@
+package com.more.chat.exception;public class GlobalException {
+}
